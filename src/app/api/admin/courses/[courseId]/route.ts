@@ -20,8 +20,10 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { courseId } = await params;
+
   const course = await prisma.course.findUnique({
-    where: { id: params.courseId },
+    where: { id: courseId },
     select: { id: true, name: true, description: true },
   });
 

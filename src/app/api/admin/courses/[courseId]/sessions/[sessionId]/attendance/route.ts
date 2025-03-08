@@ -12,8 +12,11 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { sessionId } = await params 
+  const { courseId } = await params
+
   const courseSession = await prisma.courseSession.findUnique({
-    where: { id: params.sessionId },
+    where: { id: sessionId },
     include: { course: { select: { name: true } } },
   });
 
@@ -22,7 +25,7 @@ export async function GET(
   }
 
   const enrollments = await prisma.courseEnrollment.findMany({
-    where: { courseId: params.courseId },
+    where: { courseId: courseId },
     include: { student: { select: { id: true, name: true, rollno: true } } },
   });
 
