@@ -13,15 +13,14 @@ interface AttendanceStat {
 
 export async function GET(
   request: Request,
-  context: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Extract courseId from context.params (no await needed)
-  const { courseId } = context.params;
+  const { courseId } = await params;
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
