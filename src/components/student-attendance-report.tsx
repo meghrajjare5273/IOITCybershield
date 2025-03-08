@@ -38,24 +38,15 @@ export function StudentAttendanceReport({
   useEffect(() => {
     const fetchAttendanceData = async () => {
       try {
-        // In a real implementation, this would be an API call
-        // For now, we'll simulate the data
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // Mock data
-        setStudentName("John Doe");
-        setCourseName("Cybersecurity Fundamentals");
-        setAttendanceRecords([
-          { sessionId: "1", sessionDate: "2023-09-01", present: true },
-          { sessionId: "2", sessionDate: "2023-09-08", present: true },
-          { sessionId: "3", sessionDate: "2023-09-15", present: false },
-          { sessionId: "4", sessionDate: "2023-09-22", present: true },
-          { sessionId: "5", sessionDate: "2023-09-29", present: true },
-        ]);
-
+        const response = await fetch(
+          `/api/admin/students/${studentId}/attendance/${courseId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch attendance data");
+        const data = await response.json();
+        setStudentName(data.studentName);
+        setCourseName(data.courseName);
+        setAttendanceRecords(data.attendanceRecords);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching attendance data:", error);

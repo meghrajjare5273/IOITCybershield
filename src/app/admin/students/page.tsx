@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,50 +25,27 @@ export default function StudentsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const view = searchParams.get("view") || "manage";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const studentIdParam = searchParams.get("studentId");
+  const searchQuery = searchParams.get("search") || "";
+
   const [students, setStudents] = useState<any[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(
+    studentIdParam
+  );
 
   // Fetch students data
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        // In a real implementation, this would be a server action or API call
-        // For now, we'll simulate the data
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Mock data
-        setStudents([
-          {
-            id: "1",
-            name: "John Doe",
-            email: "john@example.com",
-            branch: "Computer Science",
-            phone: "1234567890",
-            rollno: "CS001",
-          },
-          {
-            id: "2",
-            name: "Jane Smith",
-            email: "jane@example.com",
-            branch: "Information Technology",
-            phone: "0987654321",
-            rollno: "IT002",
-          },
-          {
-            id: "3",
-            name: "Bob Johnson",
-            email: "bob@example.com",
-            branch: "Computer Science",
-            phone: "5555555555",
-            rollno: "CS003",
-          },
-        ]);
-
+        const response = await fetch(
+          `/api/admin/students?search=${encodeURIComponent(searchQuery)}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch students");
+        const data = await response.json();
+        setStudents(data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -76,15 +54,44 @@ export default function StudentsPage() {
     };
 
     fetchStudents();
-  }, []);
+  }, [searchQuery]);
 
   const handleTabChange = (value: string) => {
-    router.push(`/admin/students?view=${value}`);
+    // Update URL without causing a full page navigation
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", value);
+
+    // If changing away from reports, remove studentId
+    if (value !== "reports") {
+      params.delete("studentId");
+    }
+
+    router.push(`/admin/students?${params.toString()}`);
+  };
+
+  const handleSearch = (query: string) => {
+    // Filter students locally without URL change
+    if (query) {
+      const filtered = students.filter(
+        (student) =>
+          student.name.toLowerCase().includes(query.toLowerCase()) ||
+          student.email.toLowerCase().includes(query.toLowerCase()) ||
+          student.rollno.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredStudents(filtered);
+    } else {
+      setFilteredStudents(students);
+    }
   };
 
   const handleViewAttendance = (studentId: string) => {
     setSelectedStudent(studentId);
-    router.push(`/admin/students?view=reports&studentId=${studentId}`);
+
+    // Update URL without causing a full page navigation
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", "reports");
+    params.set("studentId", studentId);
+    router.push(`/admin/students?${params.toString()}`);
   };
 
   return (
@@ -180,7 +187,10 @@ export default function StudentsPage() {
                   <CardTitle>Search Students</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <StudentSearch />
+                  <StudentSearch
+                    onSearch={handleSearch}
+                    initialValue={searchQuery}
+                  />
 
                   {loading ? (
                     <div className="flex justify-center py-8">
@@ -199,7 +209,7 @@ export default function StudentsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {students.map((student) => (
+                        {filteredStudents.map((student) => (
                           <TableRow key={student.id}>
                             <TableCell>{student.name}</TableCell>
                             <TableCell>{student.email}</TableCell>

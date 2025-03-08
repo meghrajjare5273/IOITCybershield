@@ -1,30 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import type React from "react";
+
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
-export function StudentSearch() {
-  const [search, setSearch] = useState("");
-  const router = useRouter();
+interface StudentSearchProps {
+  onSearch: (query: string) => void;
+  initialValue?: string;
+}
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      router.push(`/admin/students?search=${encodeURIComponent(search)}`);
-    }, 300); // Debounce by 300ms
+export function StudentSearch({
+  onSearch,
+  initialValue = "",
+}: StudentSearchProps) {
+  const [search, setSearch] = useState(initialValue);
 
-    return () => {
-      clearTimeout(handler); // Cleanup timeout on unmount or search change
-    };
-  }, [search, router]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    onSearch(value);
+  };
 
   return (
     <Input
       type="text"
       placeholder="Search students..."
       value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="mb-4" // Optional styling for spacing
+      onChange={handleChange}
+      className="mb-4"
     />
   );
 }

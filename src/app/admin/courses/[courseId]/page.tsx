@@ -36,55 +36,13 @@ export default function CourseDetailPage() {
     const fetchCourseData = async () => {
       try {
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // Mock data
-        setCourse({
-          id: courseId,
-          name: "Cybersecurity Fundamentals",
-          description: "Introduction to cybersecurity concepts",
-        });
-
-        setSessions([
-          { id: "1", date: new Date("2023-09-01").toISOString() },
-          { id: "2", date: new Date("2023-09-08").toISOString() },
-          { id: "3", date: new Date("2023-09-15").toISOString() },
-          { id: "4", date: new Date("2023-09-22").toISOString() },
-          { id: "5", date: new Date("2023-09-29").toISOString() },
-        ]);
-
-        setEnrollments([
-          { id: "1", student: { id: "1", name: "John Doe" } },
-          { id: "2", student: { id: "2", name: "Jane Smith" } },
-          { id: "3", student: { id: "3", name: "Bob Johnson" } },
-        ]);
-
-        setAttendanceStats([
-          {
-            studentId: "1",
-            studentName: "John Doe",
-            attendedSessions: 4,
-            totalSessions: 5,
-            percentage: 80,
-          },
-          {
-            studentId: "2",
-            studentName: "Jane Smith",
-            attendedSessions: 5,
-            totalSessions: 5,
-            percentage: 100,
-          },
-          {
-            studentId: "3",
-            studentName: "Bob Johnson",
-            attendedSessions: 3,
-            totalSessions: 5,
-            percentage: 60,
-          },
-        ]);
-
+        const response = await fetch(`/api/admin/courses/${courseId}`);
+        if (!response.ok) throw new Error("Failed to fetch course data");
+        const data = await response.json();
+        setCourse(data.course);
+        setSessions(data.sessions);
+        setEnrollments(data.enrollments);
+        setAttendanceStats(data.attendanceStats);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching course data:", error);

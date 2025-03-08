@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Save, ArrowLeft } from "lucide-react";
+import { saveCourseAttendance } from "@/actions/attendance-actions";
 
 type Student = {
   id: string;
@@ -37,19 +38,14 @@ export default function AttendancePage() {
     const fetchSessionData = async () => {
       try {
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // Mock data
-        setCourseName("Cybersecurity Fundamentals");
-        setSessionDate(new Date("2023-09-15").toLocaleDateString());
-        setStudents([
-          { id: "1", name: "John Doe", rollno: "CS001", present: true },
-          { id: "2", name: "Jane Smith", rollno: "IT002", present: false },
-          { id: "3", name: "Bob Johnson", rollno: "CS003", present: true },
-        ]);
-
+        const response = await fetch(
+          `/api/admin/courses/${courseId}/sessions/${sessionId}/attendance`
+        );
+        if (!response.ok) throw new Error("Failed to fetch session data");
+        const data = await response.json();
+        setCourseName(data.courseName);
+        setSessionDate(new Date(data.sessionDate).toLocaleDateString());
+        setStudents(data.students);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching session data:", error);
@@ -76,7 +72,6 @@ export default function AttendancePage() {
     setMessage(null);
 
     try {
-      // Create FormData object
       const formData = new FormData();
       students.forEach((student) => {
         if (student.present) {
@@ -84,20 +79,17 @@ export default function AttendancePage() {
         }
       });
 
-      // In a real implementation, this would call the server action
-      // For now, we'll simulate the API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setMessage({ type: "success", text: "Attendance saved successfully" });
-      setSaving(false);
-
-      // Simulate redirect after successful save
-      setTimeout(() => {
-        router.push(`/admin/courses/${courseId}`);
-      }, 1500);
+      const result = await saveCourseAttendance(formData, sessionId);
+      if (result.success) {
+        setMessage({ type: "success", text: result.message });
+        setTimeout(() => router.push(`/admin/courses/${courseId}`), 1500);
+      } else {
+        setMessage({ type: "error", text: result.message });
+      }
     } catch (error) {
       console.error("Error saving attendance:", error);
       setMessage({ type: "error", text: "Failed to save attendance" });
+    } finally {
       setSaving(false);
     }
   };

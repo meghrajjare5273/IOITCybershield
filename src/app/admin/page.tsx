@@ -19,21 +19,10 @@ export default function AdminDashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // Mock data
-        setStats({
-          studentCount: 45,
-          courseCount: 3,
-          upcomingSessions: [
-            { id: "1", date: new Date("2023-10-05").toISOString() },
-            { id: "2", date: new Date("2023-10-12").toISOString() },
-            { id: "3", date: new Date("2023-10-19").toISOString() },
-          ],
-        });
-
+        const response = await fetch("/api/admin/dashboard");
+        if (!response.ok) throw new Error("Failed to fetch dashboard data");
+        const data = await response.json();
+        setStats(data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);

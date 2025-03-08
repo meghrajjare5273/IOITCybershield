@@ -30,32 +30,11 @@ export default function CoursesPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // In a real implementation, this would be a server action or API call
-        // For now, we'll simulate the data
         setLoading(true);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Mock data
-        setCourses([
-          {
-            id: "1",
-            name: "Cybersecurity Fundamentals",
-            description: "Introduction to cybersecurity concepts",
-          },
-          {
-            id: "2",
-            name: "Network Security",
-            description: "Advanced network security techniques",
-          },
-          {
-            id: "3",
-            name: "Ethical Hacking",
-            description: "Ethical hacking and penetration testing",
-          },
-        ]);
-
+        const response = await fetch("/api/admin/courses");
+        if (!response.ok) throw new Error("Failed to fetch courses");
+        const data = await response.json();
+        setCourses(data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching courses:", error);
