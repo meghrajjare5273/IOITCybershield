@@ -1,8 +1,9 @@
+import type React from "react";
 import { auth } from "@/lib/auth";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { LogoutButton } from "@/components/logout-button";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 export const metadata: Metadata = {
   title: "Admin | CyberShield",
@@ -17,13 +18,5 @@ export default async function AdminLayout({
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return redirect("/auth/sign-in");
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="p-4 border-b flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-primary">CyberShield Admin</h1>
-        <LogoutButton />
-      </header>
-      <main className="p-6">{children}</main>
-    </div>
-  );
+  return <DashboardLayout>{children}</DashboardLayout>;
 }

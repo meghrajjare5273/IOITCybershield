@@ -1,66 +1,278 @@
-import { prisma } from "@/lib/prisma";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SessionForm } from "@/components/session-form";
 import { EnrollmentForm } from "@/components/enrollment-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Calendar, Users, BarChart } from "lucide-react";
 import Link from "next/link";
 
-export default async function CourseDetailPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>; // Type params as a Promise
-}) {
-  const { courseId } = await params; // Await params to get the object
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
-    include: { sessions: true, enrollments: { include: { student: true } } },
-  });
+export default function CourseDetailPage() {
+  const params = useParams();
+  const courseId = params.courseId as string;
 
-  const allStudents = await prisma.student.findMany({
-    select: { id: true, name: true },
-  });
+  const [loading, setLoading] = useState(true);
 
-  if (!course) return <div>Course not found</div>;
+  const [course, setCourse] = useState<any>(null);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("sessions");
 
-  const unenrolledStudents = allStudents.filter(
-    (student) => !course.enrollments.some((e) => e.studentId === student.id)
-  );
+  useEffect(() => {
+    const fetchCourseData = async () => {
+      try {
+        setLoading(true);
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        // Mock data
+        setCourse({
+          id: courseId,
+          name: "Cybersecurity Fundamentals",
+          description: "Introduction to cybersecurity concepts",
+        });
+
+        setSessions([
+          { id: "1", date: new Date("2023-09-01").toISOString() },
+          { id: "2", date: new Date("2023-09-08").toISOString() },
+          { id: "3", date: new Date("2023-09-15").toISOString() },
+          { id: "4", date: new Date("2023-09-22").toISOString() },
+          { id: "5", date: new Date("2023-09-29").toISOString() },
+        ]);
+
+        setEnrollments([
+          { id: "1", student: { id: "1", name: "John Doe" } },
+          { id: "2", student: { id: "2", name: "Jane Smith" } },
+          { id: "3", student: { id: "3", name: "Bob Johnson" } },
+        ]);
+
+        setAttendanceStats([
+          {
+            studentId: "1",
+            studentName: "John Doe",
+            attendedSessions: 4,
+            totalSessions: 5,
+            percentage: 80,
+          },
+          {
+            studentId: "2",
+            studentName: "Jane Smith",
+            attendedSessions: 5,
+            totalSessions: 5,
+            percentage: 100,
+          },
+          {
+            studentId: "3",
+            studentName: "Bob Johnson",
+            attendedSessions: 3,
+            totalSessions: 5,
+            percentage: 60,
+          },
+        ]);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching course data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchCourseData();
+  }, [courseId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{course.name}</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Sessions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SessionForm courseId={course.id} />
-          <ul className="space-y-2 mt-4">
-            {course.sessions.map((session) => (
-              <li key={session.id}>
-                <Link
-                  href={`/admin/courses/${course.id}/sessions/${session.id}/attendance`}
-                  className="hover:underline"
-                >
-                  {session.date.toDateString()}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Enrolled Students</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EnrollmentForm courseId={course.id} students={unenrolledStudents} />
-          <ul className="space-y-2 mt-4">
-            {course.enrollments.map((enrollment) => (
-              <li key={enrollment.id}>{enrollment.student.name}</li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">{course.name}</h1>
+        <p className="text-muted-foreground">{course.description}</p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
+          <TabsTrigger value="sessions" className="flex items-center gap-2">
+            <Calendar size={16} />
+            <span>Sessions</span>
+          </TabsTrigger>
+          <TabsTrigger value="students" className="flex items-center gap-2">
+            <Users size={16} />
+            <span>Students</span>
+          </TabsTrigger>
+          <TabsTrigger value="attendance" className="flex items-center gap-2">
+            <BarChart size={16} />
+            <span>Attendance</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sessions">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Sessions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SessionForm courseId={course.id} />
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium mb-4">
+                    Scheduled Sessions
+                  </h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessions.map((session) => (
+                        <TableRow key={session.id}>
+                          <TableCell>
+                            {new Date(session.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Link
+                              href={`/admin/courses/${course.id}/sessions/${session.id}/attendance`}
+                            >
+                              <Button size="sm">Mark Attendance</Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="students">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Enrolled Students</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EnrollmentForm courseId={course.id} students={[]} />
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium mb-4">
+                    Current Enrollments
+                  </h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {enrollments.map((enrollment) => (
+                        <TableRow key={enrollment.id}>
+                          <TableCell>{enrollment.student.name}</TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="outline">
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Attendance Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-4">
+                    Attendance Statistics
+                  </h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Sessions Attended</TableHead>
+                        <TableHead>Attendance Rate</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendanceStats.map((stat) => (
+                        <TableRow key={stat.studentId}>
+                          <TableCell>{stat.studentName}</TableCell>
+                          <TableCell>
+                            {stat.attendedSessions} / {stat.totalSessions}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="w-full bg-muted rounded-full h-2.5">
+                                <div
+                                  className={`h-2.5 rounded-full ${
+                                    stat.percentage >= 75
+                                      ? "bg-green-500"
+                                      : stat.percentage >= 60
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
+                                  }`}
+                                  style={{ width: `${stat.percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium">
+                                {stat.percentage}%
+                              </span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
