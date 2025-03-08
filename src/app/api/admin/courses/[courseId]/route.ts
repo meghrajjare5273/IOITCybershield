@@ -13,14 +13,15 @@ interface AttendanceStat {
 
 export async function GET(
   request: Request,
-  { params }: { params: { courseId: string } }
+  context: { params: { courseId: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { courseId } = await params;
+  // Extract courseId from context.params (no await needed)
+  const { courseId } = context.params;
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
@@ -32,19 +33,19 @@ export async function GET(
   }
 
   const sessions = await prisma.courseSession.findMany({
-    where: { courseId: params.courseId },
+    where: { courseId: courseId },
     select: { id: true, date: true },
   });
 
   const enrollments = await prisma.courseEnrollment.findMany({
-    where: { courseId: params.courseId },
+    where: { courseId: courseId },
     include: { student: { select: { id: true, name: true } } },
   });
 
   // Use findMany to get all attendance records
   const attendanceRecords = await prisma.courseAttendance.findMany({
     where: {
-      courseSession: { courseId: params.courseId },
+      courseSession: { courseId: courseId },
       studentId: { not: "" },
     },
     select: {
