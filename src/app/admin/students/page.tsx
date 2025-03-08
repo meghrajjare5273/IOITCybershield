@@ -10,9 +10,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeleteButton } from "@/components/delete-button";
+import { StudentSearch } from "@/components/student-search";
 
-export default async function StudentsPage() {
-  const students = await prisma.student.findMany();
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: { search?: string };
+}) {
+  const { search } = (await searchParams) || "";
+  const students = await prisma.student.findMany({
+    where: {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { rollno: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ],
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -23,6 +37,7 @@ export default async function StudentsPage() {
           <CardTitle>Student List</CardTitle>
         </CardHeader>
         <CardContent>
+          <StudentSearch /> {/* Add search input here */}
           <Table>
             <TableHeader>
               <TableRow>
