@@ -5,15 +5,15 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { courseId: string; sessionId: string } }
+  { params }: { params: Promise<{ courseId: string; sessionId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { sessionId } = await params 
-  const { courseId } = await params
+  const { sessionId } = await params;
+  const { courseId } = await params;
 
   const courseSession = await prisma.courseSession.findUnique({
     where: { id: sessionId },
@@ -30,7 +30,7 @@ export async function GET(
   });
 
   const attendances = await prisma.courseAttendance.findMany({
-    where: { courseSessionId: params.sessionId },
+    where: { courseSessionId: sessionId },
     select: { studentId: true, present: true },
   });
 
@@ -38,7 +38,9 @@ export async function GET(
     id: enrollment.student.id,
     name: enrollment.student.name,
     rollno: enrollment.student.rollno,
-    present: attendances.find((att) => att.studentId === enrollment.student.id)?.present || false,
+    present:
+      attendances.find((att) => att.studentId === enrollment.student.id)
+        ?.present || false,
   }));
 
   return NextResponse.json({

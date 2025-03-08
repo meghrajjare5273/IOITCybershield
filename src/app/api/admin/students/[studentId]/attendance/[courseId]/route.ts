@@ -5,15 +5,18 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { studentId: string; courseId: string } }
+  { params }: { params: Promise<{ studentId: string; courseId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { studentId } = await params;
+  const { courseId } = await params;
+
   const student = await prisma.student.findUnique({
-    where: { id: params.studentId },
+    where: { id: studentId },
     select: { name: true },
   });
 
@@ -22,7 +25,7 @@ export async function GET(
   }
 
   const course = await prisma.course.findUnique({
-    where: { id: params.courseId },
+    where: { id: courseId },
     select: { name: true },
   });
 
@@ -31,13 +34,13 @@ export async function GET(
   }
 
   const sessions = await prisma.courseSession.findMany({
-    where: { courseId: params.courseId },
+    where: { courseId: courseId },
     select: { id: true, date: true },
   });
 
   const attendances = await prisma.courseAttendance.findMany({
     where: {
-      studentId: params.studentId,
+      studentId: studentId,
       courseSessionId: { in: sessions.map((s) => s.id) },
     },
     select: { courseSessionId: true, present: true },
