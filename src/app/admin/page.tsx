@@ -148,7 +148,7 @@ export default function AdminDashboard() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <Link href="/admin/students?view=add">
+              <Link href="/admin/students?view=manage">
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="mr-2 h-4 w-4" />
                   Add New Student

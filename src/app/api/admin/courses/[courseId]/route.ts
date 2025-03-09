@@ -63,6 +63,20 @@ export async function GET(
     attendanceMap.set(record.studentId, currentSum + presentValue);
   }
 
+  const availableStudents = await prisma.student.findMany({
+    where: {
+      courseEnrollments: {
+        none: {
+          courseId: courseId,
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
   // Transform to our expected format
   const attendanceStats: AttendanceStat[] = Array.from(
     attendanceMap.entries()
@@ -95,5 +109,6 @@ export async function GET(
     sessions,
     enrollments,
     attendanceStats: formattedStats,
+    availableStudents,
   });
 }

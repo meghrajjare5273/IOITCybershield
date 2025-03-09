@@ -31,6 +31,7 @@ export default function CourseDetailPage() {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [attendanceStats, setAttendanceStats] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("sessions");
+  const [availableStudents, setAvailableStudents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -43,6 +44,7 @@ export default function CourseDetailPage() {
         setSessions(data.sessions);
         setEnrollments(data.enrollments);
         setAttendanceStats(data.attendanceStats);
+        setAvailableStudents(data.availableStudents);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching course data:", error);
@@ -141,7 +143,10 @@ export default function CourseDetailPage() {
                 <CardTitle>Enrolled Students</CardTitle>
               </CardHeader>
               <CardContent>
-                <EnrollmentForm courseId={course.id} students={[]} />
+                <EnrollmentForm
+                  courseId={course.id}
+                  students={availableStudents}
+                />
                 <div className="mt-6">
                   <h3 className="text-lg font-medium mb-4">
                     Current Enrollments

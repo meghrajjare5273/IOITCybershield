@@ -34,6 +34,9 @@ export default function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(
     studentIdParam
   );
+  const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [coursesFetched, setCoursesFetched] = useState(false);
 
   // Fetch students data
   useEffect(() => {
@@ -56,21 +59,45 @@ export default function StudentsPage() {
     fetchStudents();
   }, [searchQuery]);
 
+  // Fetch courses for the selected student when in "reports" view
+  useEffect(() => {
+    if (view === "reports" && selectedStudent) {
+      const fetchCourses = async () => {
+        try {
+          setCoursesFetched(false);
+          const response = await fetch(
+            `/api/admin/students/${selectedStudent}/courses`
+          );
+          if (!response.ok) throw new Error("Failed to fetch courses");
+          const data = await response.json();
+          setCourses(data);
+          setCoursesFetched(true);
+          // Optionally pre-select the first course
+          // if (data.length > 0) setSelectedCourseId(data[0].id);
+        } catch (error) {
+          console.error("Error fetching courses:", error);
+          setCourses([]);
+          setCoursesFetched(true);
+        }
+      };
+      fetchCourses();
+    }
+  }, [selectedStudent, view]);
+
   const handleTabChange = (value: string) => {
-    // Update URL without causing a full page navigation
     const params = new URLSearchParams(searchParams.toString());
     params.set("view", value);
-
-    // If changing away from reports, remove studentId
     if (value !== "reports") {
       params.delete("studentId");
+      setSelectedStudent(null);
+      setCourses([]);
+      setSelectedCourseId(null);
+      setCoursesFetched(false);
     }
-
     router.push(`/admin/students?${params.toString()}`);
   };
 
   const handleSearch = (query: string) => {
-    // Filter students locally without URL change
     if (query) {
       const filtered = students.filter(
         (student) =>
@@ -86,8 +113,6 @@ export default function StudentsPage() {
 
   const handleViewAttendance = (studentId: string) => {
     setSelectedStudent(studentId);
-
-    // Update URL without causing a full page navigation
     const params = new URLSearchParams(searchParams.toString());
     params.set("view", "reports");
     params.set("studentId", studentId);
@@ -126,7 +151,6 @@ export default function StudentsPage() {
             >
               <div className="grid gap-6 md:grid-cols-2">
                 <StudentForm />
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Student List</CardTitle>
@@ -191,7 +215,6 @@ export default function StudentsPage() {
                     onSearch={handleSearch}
                     initialValue={searchQuery}
                   />
-
                   {loading ? (
                     <div className="flex justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -248,10 +271,65 @@ export default function StudentsPage() {
               transition={{ duration: 0.3 }}
             >
               {selectedStudent ? (
-                <StudentAttendanceReport
-                  studentId={selectedStudent}
-                  courseId="1"
-                />
+                !coursesFetched ? (
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : courses.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="text-center py-8">
+                        <h3 className="text-lg font-medium mb-2">
+                          No Courses Enrolled
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          This student is not enrolled in any courses.
+                        </p>
+                        <Button
+                          onClick={() =>
+                            router.push("/admin/students?view=manage")
+                          }
+                        >
+                          Go to Student List
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div>
+                    <div className="mb-4">
+                      <label
+                        htmlFor="course-select"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Select Course
+                      </label>
+                      <select
+                        id="course-select"
+                        value={selectedCourseId || ""}
+                        onChange={(e) => setSelectedCourseId(e.target.value)}
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="">-- Select a course --</option>
+                        {courses.map((course) => (
+                          <option key={course.id} value={course.id}>
+                            {course.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedCourseId && (
+                      <StudentAttendanceReport
+                        studentId={selectedStudent}
+                        courseId={selectedCourseId}
+                      />
+                    )}
+                  </div>
+                )
               ) : (
                 <Card>
                   <CardContent className="p-6">

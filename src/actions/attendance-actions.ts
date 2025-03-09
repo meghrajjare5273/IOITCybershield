@@ -8,19 +8,34 @@ export async function saveCourseAttendance(
   formData: FormData,
   sessionId: string
 ) {
+  // Verify user authentication
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Unauthorized");
 
-  const attendances = [];
-  for (const [key, value] of formData.entries()) {
-    if (key.startsWith("attendance-")) {
-      const studentId = key.replace("attendance-", "");
-      const present = value === "on";
-      attendances.push({ studentId, present });
-    }
-  }
+  // Fetch the course session to get the courseId
+  const courseSession = await prisma.courseSession.findUnique({
+    where: { id: sessionId },
+    select: { courseId: true },
+  });
+  if (!courseSession) throw new Error("Session not found");
+
+  const courseId = courseSession.courseId;
+
+  // Fetch all students enrolled in the course
+  const enrollments = await prisma.courseEnrollment.findMany({
+    where: { courseId },
+    select: { studentId: true },
+  });
+
+  // Map enrollments to attendance records, checking formData for presence
+  const attendances = enrollments.map((enrollment) => {
+    const studentId = enrollment.studentId;
+    const present = formData.has(`attendance-${studentId}`);
+    return { studentId, present };
+  });
 
   try {
+    // Upsert attendance records for all enrolled students
     await Promise.all(
       attendances.map((att) =>
         prisma.courseAttendance.upsert({
