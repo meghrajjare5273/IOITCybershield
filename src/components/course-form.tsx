@@ -12,7 +12,10 @@ import { cn } from "@/lib/utils";
 
 export function CourseForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (formData: FormData) => {
@@ -39,17 +42,36 @@ export function CourseForm() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" required className="border-input" />
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  className="border-input"
+                />
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Input id="description" name="description" required className="border-input" />
+                <Input
+                  id="description"
+                  name="description"
+                  required
+                  className="border-input"
+                />
               </div>
-              <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary/90 w-full md:w-auto"
+              >
                 {isSubmitting ? "Adding..." : "Add Course"}
               </Button>
               {result && (
-                <p className={cn("text-sm", result.success ? "text-green-500" : "text-red-500")}>
+                <p
+                  className={cn(
+                    "text-sm",
+                    result.success ? "text-green-500" : "text-red-500"
+                  )}
+                >
                   {result.message}
                 </p>
               )}

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +27,7 @@ interface SidebarItemProps {
   href: string;
   active?: boolean;
   subItems?: { label: string; href: string }[];
+  onClick?: () => void;
 }
 
 const SidebarItem = ({
@@ -35,6 +36,7 @@ const SidebarItem = ({
   href,
   active,
   subItems,
+  onClick,
 }: SidebarItemProps) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -46,6 +48,8 @@ const SidebarItem = ({
           if (subItems?.length) {
             e.preventDefault();
             setExpanded(!expanded);
+          } else if (onClick) {
+            onClick();
           }
         }}
         className={cn(
@@ -65,6 +69,7 @@ const SidebarItem = ({
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClick}
               className="block px-3 py-2 text-sm rounded-md hover:bg-accent"
             >
               {item.label}
@@ -77,47 +82,98 @@ const SidebarItem = ({
 };
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
 
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Initial check
+    checkIfMobile();
+
+    // Add event listener
+    window.addEventListener("resize", checkIfMobile);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, []);
+
+  // Close sidebar on mobile when clicking a link
+  const handleMobileLinkClick = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Mobile sidebar toggle */}
-      <button
-        className="fixed z-50 bottom-4 right-4 p-2 rounded-full bg-primary text-primary-foreground md:hidden"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Mobile header */}
+      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card z-10">
+        <h1 className="text-xl font-bold text-primary">CyberShield</h1>
+        <button
+          className="p-2 rounded-md hover:bg-accent"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </header>
 
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="fixed inset-y-0 left-0 z-40 w-64 bg-card border-r shadow-sm md:relative"
+            initial={{
+              x: isMobile ? -280 : 0,
+              opacity: isMobile ? 0 : 1,
+            }}
+            animate={{
+              x: 0,
+              opacity: 1,
+            }}
+            exit={{
+              x: isMobile ? -280 : 0,
+              opacity: isMobile ? 0 : 1,
+            }}
+            transition={{ duration: 0.3 }}
+            className={cn(
+              "fixed inset-y-0 left-0 z-40 w-64 bg-card border-r shadow-sm md:relative",
+              isMobile ? "top-[57px] pt-2" : "pt-0"
+            )}
           >
-            <div className="p-4 border-b">
-              <h1 className="text-xl font-bold text-primary">CyberShield</h1>
-              <p className="text-sm text-muted-foreground">Attendance System</p>
-            </div>
+            {!isMobile && (
+              <div className="p-4 border-b">
+                <h1 className="text-xl font-bold text-primary">CyberShield</h1>
+                <p className="text-sm text-muted-foreground">
+                  Attendance System
+                </p>
+              </div>
+            )}
 
-            <nav className="p-4 space-y-1">
+            <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)] md:max-h-[calc(100vh-140px)]">
               <SidebarItem
                 icon={<Home size={20} />}
                 label="Dashboard"
                 href="/admin"
                 active={pathname === "/admin"}
+                onClick={handleMobileLinkClick}
               />
               <SidebarItem
                 icon={<Users size={20} />}
                 label="Students"
                 href="/admin/students"
                 active={pathname.startsWith("/admin/students")}
+                onClick={handleMobileLinkClick}
                 subItems={[
-                  { label: "Add Student", href: "/admin/students?view=add" },
+                  { label: "Add Student", href: "/admin/students?view=manage" },
                   {
                     label: "Search Students",
                     href: "/admin/students?view=search",
@@ -133,6 +189,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 label="Courses"
                 href="/admin/courses"
                 active={pathname.startsWith("/admin/courses")}
+                onClick={handleMobileLinkClick}
                 subItems={[
                   { label: "Add Course", href: "/admin/courses?view=add" },
                   {
@@ -146,12 +203,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 label="Sessions"
                 href="/admin/sessions"
                 active={pathname.startsWith("/admin/sessions")}
+                onClick={handleMobileLinkClick}
               />
               <SidebarItem
                 icon={<BarChart size={20} />}
                 label="Reports"
                 href="/admin/reports"
                 active={pathname.startsWith("/admin/reports")}
+                onClick={handleMobileLinkClick}
               />
             </nav>
 
@@ -165,8 +224,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
+      {/* Overlay for mobile */}
+      {sidebarOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main content */}
-      <main className="flex-1 p-6 md:p-8 overflow-auto">{children}</main>
+      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto pt-4">
+        {children}
+      </main>
     </div>
   );
 }

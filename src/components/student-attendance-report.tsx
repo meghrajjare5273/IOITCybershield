@@ -92,11 +92,13 @@ export function StudentAttendanceReport({
     >
       <Card>
         <CardHeader>
-          <CardTitle>Attendance Report: {studentName}</CardTitle>
-          <p className="text-muted-foreground">Course: {courseName}</p>
+          <CardTitle className="text-lg sm:text-xl">
+            Attendance Report: {studentName}
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">Course: {courseName}</p>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
             <div>
               <h3 className="text-lg font-medium">Attendance Rate</h3>
               <p className="text-sm text-muted-foreground">
@@ -111,36 +113,38 @@ export function StudentAttendanceReport({
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Session Date</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendanceRecords.map((record) => (
-                <TableRow key={record.sessionId}>
-                  <TableCell>
-                    {new Date(record.sessionDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {record.present ? (
-                      <div className="flex items-center text-green-500">
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Present
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-red-500">
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Absent
-                      </div>
-                    )}
-                  </TableCell>
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Session Date</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {attendanceRecords.map((record) => (
+                  <TableRow key={record.sessionId}>
+                    <TableCell>
+                      {new Date(record.sessionDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {record.present ? (
+                        <div className="flex items-center text-green-500">
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          <span>Present</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-red-500">
+                          <XCircle className="mr-2 h-4 w-4" />
+                          <span>Absent</span>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

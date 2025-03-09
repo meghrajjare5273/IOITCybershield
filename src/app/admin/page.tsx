@@ -44,13 +44,13 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-2">
           Welcome to the CyberShield Attendance System
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,19 +151,19 @@ export default function AdminDashboard() {
               <Link href="/admin/students?view=manage">
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="mr-2 h-4 w-4" />
-                  Add New Student
+                  <span>Add New Student</span>
                 </Button>
               </Link>
               <Link href="/admin/courses?view=add">
                 <Button className="w-full justify-start" variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Create New Course
+                  <span>Create New Course</span>
                 </Button>
               </Link>
               <Link href="/admin/students?view=reports">
                 <Button className="w-full justify-start" variant="outline">
                   <BarChart className="mr-2 h-4 w-4" />
-                  View Attendance Reports
+                  <span>View Attendance Reports</span>
                 </Button>
               </Link>
             </CardContent>

@@ -112,7 +112,7 @@ export default function AttendancePage() {
           className="flex items-center gap-1"
         >
           <ArrowLeft size={16} />
-          <span>Back to Course</span>
+          <span className="hidden sm:inline">Back to Course</span>
         </Button>
       </div>
 
@@ -123,19 +123,25 @@ export default function AttendancePage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Attendance for {sessionDate}</CardTitle>
-            <p className="text-muted-foreground">Course: {courseName}</p>
+            <CardTitle className="text-lg sm:text-xl">
+              Attendance for {sessionDate}
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">
+              Course: {courseName}
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
-                <div className="border rounded-md overflow-hidden">
+                <div className="border rounded-md overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="py-3 px-4 text-left">Student</th>
-                        <th className="py-3 px-4 text-left">Roll No</th>
-                        <th className="py-3 px-4 text-center">Present</th>
+                        <th className="py-3 px-2 sm:px-4 text-left">Student</th>
+                        <th className="py-3 px-2 sm:px-4 text-left">Roll No</th>
+                        <th className="py-3 px-2 sm:px-4 text-center">
+                          Present
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -146,9 +152,11 @@ export default function AttendancePage() {
                             index % 2 === 0 ? "bg-background" : "bg-muted/20"
                           }
                         >
-                          <td className="py-3 px-4">{student.name}</td>
-                          <td className="py-3 px-4">{student.rollno}</td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-3 px-2 sm:px-4">{student.name}</td>
+                          <td className="py-3 px-2 sm:px-4">
+                            {student.rollno}
+                          </td>
+                          <td className="py-3 px-2 sm:px-4 text-center">
                             <div className="flex justify-center">
                               <Checkbox
                                 id={`attendance-${student.id}`}
@@ -165,7 +173,7 @@ export default function AttendancePage() {
                   </table>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     {message && (
                       <p
@@ -179,15 +187,16 @@ export default function AttendancePage() {
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <a
                       href={`/api/courses/${courseId}/sessions/${sessionId}/attendance.xlsx`}
                       download
+                      className="w-full sm:w-auto"
                     >
                       <Button
                         type="button"
                         variant="outline"
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 w-full"
                       >
                         <Download size={16} />
                         <span>Download Excel</span>
@@ -196,7 +205,7 @@ export default function AttendancePage() {
                     <Button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 w-full sm:w-auto"
                     >
                       {saving ? (
                         <>

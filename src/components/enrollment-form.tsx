@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Simple Spinner component (create if not available)
+// Simple Spinner component
 const Spinner = ({ className }: { className?: string }) => (
   <svg
     className={`animate-spin h-5 w-5 ${className}`}
@@ -63,30 +63,36 @@ export function EnrollmentForm({
 
   return (
     <form action={handleSubmit}>
-      <div className="flex space-x-4">
-        <div>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full">
           <Label htmlFor="studentId">Select Student</Label>
           <Select
             name="studentId"
             value={studentId}
             onValueChange={setStudentId}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a student" />
             </SelectTrigger>
             <SelectContent>
-              {students.map((student) => (
-                <SelectItem key={student.id} value={student.id}>
-                  {student.name}
+              {students.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  No students available
                 </SelectItem>
-              ))}
+              ) : (
+                students.map((student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
         <Button
           type="submit"
           disabled={isSubmitting || !studentId}
-          className="self-end"
+          className="self-end mt-2 sm:mt-0 w-full sm:w-auto"
         >
           {isSubmitting ? (
             <>
