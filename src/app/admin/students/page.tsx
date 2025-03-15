@@ -20,6 +20,7 @@ import {
 import { DeleteButton } from "@/components/delete-button";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, BarChart } from "lucide-react";
+import { BulkStudentUpload } from "@/components/bulk-upload";
 
 export default function StudentsPage() {
   const searchParams = useSearchParams();
@@ -112,11 +113,12 @@ export default function StudentsPage() {
   };
 
   const handleViewAttendance = (studentId: string) => {
-    setSelectedStudent(studentId);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("view", "reports");
-    params.set("studentId", studentId);
-    router.push(`/admin/students?${params.toString()}`);
+    // setSelectedStudent(studentId);
+    // const params = new URLSearchParams(searchParams.toString());
+    // params.set("view", "reports");
+    // params.set("studentId", studentId);
+    // router.push(`/admin/students?${params.toString()}`);
+    router.push(`/admin/students?view=reports&studentId=${studentId}`);
   };
 
   return (
@@ -142,7 +144,7 @@ export default function StudentsPage() {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <TabsContent value="manage" asChild>
+          <TabsContent key="manage" value="manage" asChild>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -151,6 +153,7 @@ export default function StudentsPage() {
             >
               <div className="grid gap-6 md:grid-cols-2">
                 <StudentForm />
+                <BulkStudentUpload />
                 <Card>
                   <CardHeader>
                     <CardTitle>Student List</CardTitle>
@@ -199,7 +202,7 @@ export default function StudentsPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="search" asChild>
+          <TabsContent key="search" value="search" asChild>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -263,7 +266,7 @@ export default function StudentsPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="reports" asChild>
+          <TabsContent key="reports" value="reports" asChild>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
