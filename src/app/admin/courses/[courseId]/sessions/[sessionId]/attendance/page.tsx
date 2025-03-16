@@ -3,14 +3,14 @@ import { AttendanceClient } from "@/components/attendance-client";
 import { notFound } from "next/navigation";
 
 interface PageParams {
-  params: {
+  params: Promise<{
     courseId: string;
     sessionId: string;
-  };
+  }>;
 }
 
 export default async function AttendancePage({ params }: PageParams) {
-  const { courseId, sessionId } = await   params;
+  const { courseId, sessionId } = await params;
 
   const session = await prisma.courseSession.findUnique({
     where: { id: sessionId },
