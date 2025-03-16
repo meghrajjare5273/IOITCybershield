@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Shield,
 } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import { cn } from "@/lib/utils";
@@ -53,8 +54,10 @@ const SidebarItem = ({
           }
         }}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-          active ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+          "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200",
+          active
+            ? "bg-primary text-primary-foreground font-medium shadow-sm"
+            : "hover:bg-accent hover:translate-x-1"
         )}
       >
         {icon}
@@ -64,18 +67,24 @@ const SidebarItem = ({
       </Link>
 
       {subItems?.length && expanded && (
-        <div className="ml-8 mt-1 space-y-1">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2 }}
+          className="ml-8 mt-1 space-y-1 overflow-hidden"
+        >
           {subItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClick}
-              className="block px-3 py-2 text-sm rounded-md hover:bg-accent"
+              className="block px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
             >
               {item.label}
             </Link>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -117,11 +126,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile header */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card z-10">
-        <h1 className="text-xl font-bold text-primary">CyberShield</h1>
+      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card z-10 sticky top-0">
+        <div className="flex items-center">
+          <Shield className="h-6 w-6 text-primary mr-2" />
+          <h1 className="text-xl font-bold text-primary">CyberShield</h1>
+        </div>
         <button
-          className="p-2 rounded-md hover:bg-accent"
+          className="p-2 rounded-md hover:bg-accent transition-colors"
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
         >
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -150,11 +163,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             )}
           >
             {!isMobile && (
-              <div className="p-4 border-b">
-                <h1 className="text-xl font-bold text-primary">CyberShield</h1>
-                <p className="text-sm text-muted-foreground">
-                  Attendance System
-                </p>
+              <div className="p-4 border-b flex items-center">
+                <Shield className="h-6 w-6 text-primary mr-2" />
+                <div>
+                  <h1 className="text-xl font-bold text-primary">
+                    CyberShield
+                  </h1>
+                  <p className="text-xs text-muted-foreground">
+                    Attendance System
+                  </p>
+                </div>
               </div>
             )}
 
@@ -215,7 +233,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="absolute bottom-0 w-full p-4 border-t">
-              <LogoutButton className="w-full justify-start gap-2">
+              <LogoutButton className="w-full justify-start gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                 <LogOut size={18} />
                 <span>Logout</span>
               </LogoutButton>
@@ -226,8 +244,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Overlay for mobile */}
       {sidebarOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}

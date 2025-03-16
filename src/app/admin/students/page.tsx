@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentForm } from "@/components/student-form";
@@ -25,6 +25,8 @@ import {
   BarChart,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { BulkStudentUpload } from "@/components/bulk-upload";
 
@@ -40,7 +42,6 @@ interface Pagination {
 
 export default function StudentsPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const view = searchParams.get("view") || "manage";
   const studentIdParam = searchParams.get("studentId");
   const searchQuery = searchParams.get("search") || "";
@@ -48,19 +49,23 @@ export default function StudentsPage() {
   const limitParam = searchParams.get("limit") || "10";
 
   const [students, setStudents] = useState<any[]>([]);
-  // const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(
     studentIdParam
   );
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [coursesFetched, setCoursesFetched] = useState(false);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
+
   // Add pagination state
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
-    page: parseInt(pageParam, 10),
-    limit: parseInt(limitParam, 10),
+    page: Number.parseInt(pageParam, 10),
+    limit: Number.parseInt(limitParam, 10),
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
@@ -71,87 +76,150 @@ export default function StudentsPage() {
     const fetchStudents = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        // Add timestamp to prevent caching
+        const timestamp = Date.now();
         const response = await fetch(
           `/api/admin/students?search=${encodeURIComponent(searchQuery)}&page=${
             pagination.page
-          }&limit=${pagination.limit}`
+          }&limit=${pagination.limit}&t=${timestamp}`
         );
-        if (!response.ok) throw new Error("Failed to fetch students");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch students: ${response.statusText}`);
+        }
+
         const data = await response.json();
         setStudents(data.students);
         setPagination(data.pagination);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching students:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to load students"
+        );
+      } finally {
         setLoading(false);
       }
     };
 
     fetchStudents();
-  }, [searchQuery, pagination.page, pagination.limit]);
+  }, [searchQuery, pagination.page, pagination.limit, searchParams]);
 
   // Fetch courses for the selected student when in "reports" view
   useEffect(() => {
     if (view === "reports" && selectedStudent) {
       const fetchCourses = async () => {
         try {
+          setCoursesLoading(true);
           setCoursesFetched(false);
+          setCoursesError(null);
+
+          // Add timestamp to prevent caching
+          const timestamp = Date.now();
           const response = await fetch(
-            `/api/admin/students/${selectedStudent}/courses`
+            `/api/admin/students/${selectedStudent}/courses?t=${timestamp}`
           );
-          if (!response.ok) throw new Error("Failed to fetch courses");
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch courses: ${response.statusText}`);
+          }
+
           const data = await response.json();
           setCourses(data);
           setCoursesFetched(true);
-          // Optionally pre-select the first course
-          // if (data.length > 0) setSelectedCourseId(data[0].id);
+
+          // Optionally pre-select the first course if available
+          if (data.length > 0 && !selectedCourseId) {
+            setSelectedCourseId(data[0].id);
+          }
         } catch (error) {
           console.error("Error fetching courses:", error);
+          setCoursesError(
+            error instanceof Error ? error.message : "Failed to load courses"
+          );
           setCourses([]);
+        } finally {
+          setCoursesLoading(false);
           setCoursesFetched(true);
         }
       };
+
       fetchCourses();
     }
-  }, [selectedStudent, view]);
+  }, [selectedStudent, view, selectedCourseId]);
 
   const handleTabChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("view", value);
+    // Update URL without causing a full page navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", value);
+
+    // If changing away from reports, remove studentId
     if (value !== "reports") {
-      params.delete("studentId");
+      url.searchParams.delete("studentId");
       setSelectedStudent(null);
       setCourses([]);
       setSelectedCourseId(null);
       setCoursesFetched(false);
     }
-    router.push(`/admin/students?${params.toString()}`);
+
+    // Add timestamp to force refresh
+    url.searchParams.set("t", Date.now().toString());
+    window.history.pushState({}, "", url.toString());
+
+    // Force reload to ensure fresh data
+    window.location.href = url.toString();
   };
 
   const handleSearch = (query: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("search", query);
-    params.set("page", "1"); // Reset to first page on new search
-    router.push(`/admin/students?${params.toString()}`);
+    // Update URL with search query
+    const url = new URL(window.location.href);
+    url.searchParams.set("search", query);
+    url.searchParams.set("page", "1"); // Reset to first page on new search
+    url.searchParams.set("t", Date.now().toString()); // Add timestamp
+    window.history.pushState({}, "", url.toString());
+
+    // Force reload to ensure fresh data
+    window.location.href = url.toString();
   };
 
   const handleViewAttendance = (studentId: string) => {
-    router.push(`/admin/students?view=reports&studentId=${studentId}`);
+    setSelectedStudent(studentId);
+
+    // Update URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "reports");
+    url.searchParams.set("studentId", studentId);
+    url.searchParams.set("t", Date.now().toString()); // Add timestamp
+    window.history.pushState({}, "", url.toString());
+
+    // Force reload to ensure fresh data
+    window.location.href = url.toString();
   };
 
   // Add page change handler
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", newPage.toString());
-    router.push(`/admin/students?${params.toString()}`);
+    // Update URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", newPage.toString());
+    url.searchParams.set("t", Date.now().toString()); // Add timestamp
+    window.history.pushState({}, "", url.toString());
+
+    // Force reload to ensure fresh data
+    window.location.href = url.toString();
   };
 
   // Add limit change handler
   const handleLimitChange = (newLimit: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("limit", newLimit.toString());
-    params.set("page", "1"); // Reset to first page when changing limit
-    router.push(`/admin/students?${params.toString()}`);
+    // Update URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("limit", newLimit.toString());
+    url.searchParams.set("page", "1"); // Reset to first page when changing limit
+    url.searchParams.set("t", Date.now().toString()); // Add timestamp
+    window.history.pushState({}, "", url.toString());
+
+    // Force reload to ensure fresh data
+    window.location.href = url.toString();
   };
 
   return (
@@ -187,48 +255,73 @@ export default function StudentsPage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <StudentForm />
                 <BulkStudentUpload />
-                <Card>
+                <Card className="md:col-span-2">
                   <CardHeader>
                     <CardTitle>Student List</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {loading ? (
                       <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="flex flex-col items-center space-y-4">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <p className="text-muted-foreground">
+                            Loading students...
+                          </p>
+                        </div>
+                      </div>
+                    ) : error ? (
+                      <div className="flex justify-center py-8 text-red-600">
+                        <div className="flex flex-col items-center space-y-4">
+                          <AlertCircle className="h-8 w-8" />
+                          <p>{error}</p>
+                        </div>
                       </div>
                     ) : (
                       <>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Name</TableHead>
-                              <TableHead>Roll No</TableHead>
-                              <TableHead>Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {students.map((student) => (
-                              <TableRow key={student.id}>
-                                <TableCell>{student.name}</TableCell>
-                                <TableCell>{student.rollno}</TableCell>
-                                <TableCell>
-                                  <div className="flex gap-2">
-                                    <DeleteButton studentId={student.id} />
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleViewAttendance(student.id)
-                                      }
-                                    >
-                                      View Attendance
-                                    </Button>
-                                  </div>
-                                </TableCell>
+                        <div className="border rounded-md overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Roll No</TableHead>
+                                <TableHead>Actions</TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                            </TableHeader>
+                            <TableBody>
+                              {students.length === 0 ? (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={3}
+                                    className="text-center py-8 text-muted-foreground"
+                                  >
+                                    No students found
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                students.map((student) => (
+                                  <TableRow key={student.id}>
+                                    <TableCell>{student.name}</TableCell>
+                                    <TableCell>{student.rollno}</TableCell>
+                                    <TableCell>
+                                      <div className="flex gap-2">
+                                        <DeleteButton studentId={student.id} />
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() =>
+                                            handleViewAttendance(student.id)
+                                          }
+                                        >
+                                          View Attendance
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
 
                         {/* Add pagination controls */}
                         <div className="flex items-center justify-between mt-4">
@@ -241,7 +334,9 @@ export default function StudentsPage() {
                               className="h-9 w-20 rounded-md border border-input bg-background px-3"
                               value={pagination.limit}
                               onChange={(e) =>
-                                handleLimitChange(parseInt(e.target.value))
+                                handleLimitChange(
+                                  Number.parseInt(e.target.value)
+                                )
                               }
                             >
                               <option value="5">5</option>
@@ -300,47 +395,73 @@ export default function StudentsPage() {
                   />
                   {loading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <div className="flex flex-col items-center space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground">
+                          Searching students...
+                        </p>
+                      </div>
+                    </div>
+                  ) : error ? (
+                    <div className="flex justify-center py-8 text-red-600">
+                      <div className="flex flex-col items-center space-y-4">
+                        <AlertCircle className="h-8 w-8" />
+                        <p>{error}</p>
+                      </div>
                     </div>
                   ) : (
                     <>
-                      <Table className="mt-4">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Branch</TableHead>
-                            <TableHead>Phone</TableHead>
-                            <TableHead>Roll No</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {students.map((student) => (
-                            <TableRow key={student.id}>
-                              <TableCell>{student.name}</TableCell>
-                              <TableCell>{student.email}</TableCell>
-                              <TableCell>{student.branch}</TableCell>
-                              <TableCell>{student.phone}</TableCell>
-                              <TableCell>{student.rollno}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  <DeleteButton studentId={student.id} />
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      handleViewAttendance(student.id)
-                                    }
-                                  >
-                                    View Attendance
-                                  </Button>
-                                </div>
-                              </TableCell>
+                      <div className="border rounded-md overflow-hidden mt-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Branch</TableHead>
+                              <TableHead>Phone</TableHead>
+                              <TableHead>Roll No</TableHead>
+                              <TableHead>Actions</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {students.length === 0 ? (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={6}
+                                  className="text-center py-8 text-muted-foreground"
+                                >
+                                  No students found matching your search
+                                  criteria
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              students.map((student) => (
+                                <TableRow key={student.id}>
+                                  <TableCell>{student.name}</TableCell>
+                                  <TableCell>{student.email}</TableCell>
+                                  <TableCell>{student.branch}</TableCell>
+                                  <TableCell>{student.phone}</TableCell>
+                                  <TableCell>{student.rollno}</TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-2">
+                                      <DeleteButton studentId={student.id} />
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleViewAttendance(student.id)
+                                        }
+                                      >
+                                        View Attendance
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
 
                       {/* Add pagination controls for search results */}
                       <div className="flex items-center justify-between mt-4">
@@ -353,7 +474,7 @@ export default function StudentsPage() {
                             className="h-9 w-20 rounded-md border border-input bg-background px-3"
                             value={pagination.limit}
                             onChange={(e) =>
-                              handleLimitChange(parseInt(e.target.value))
+                              handleLimitChange(Number.parseInt(e.target.value))
                             }
                           >
                             <option value="5">5</option>
@@ -401,11 +522,27 @@ export default function StudentsPage() {
               transition={{ duration: 0.3 }}
             >
               {selectedStudent ? (
-                !coursesFetched ? (
+                coursesLoading ? (
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="flex flex-col items-center space-y-4">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <p className="text-muted-foreground">
+                            Loading student courses...
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : coursesError ? (
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex justify-center py-8 text-red-600">
+                        <div className="flex flex-col items-center space-y-4">
+                          <AlertCircle className="h-8 w-8" />
+                          <p>{coursesError}</p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -420,9 +557,13 @@ export default function StudentsPage() {
                           This student is not enrolled in any courses.
                         </p>
                         <Button
-                          onClick={() =>
-                            router.push("/admin/students?view=manage")
-                          }
+                          onClick={() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("view", "manage");
+                            url.searchParams.delete("studentId");
+                            url.searchParams.set("t", Date.now().toString());
+                            window.location.href = url.toString();
+                          }}
                         >
                           Go to Student List
                         </Button>
@@ -431,18 +572,18 @@ export default function StudentsPage() {
                   </Card>
                 ) : (
                   <div>
-                    <div className="mb-4">
+                    <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
                       <label
                         htmlFor="course-select"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium mb-2"
                       >
-                        Select Course
+                        Select Course to View Attendance
                       </label>
                       <select
                         id="course-select"
                         value={selectedCourseId || ""}
                         onChange={(e) => setSelectedCourseId(e.target.value)}
-                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="w-full py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                       >
                         <option value="">-- Select a course --</option>
                         {courses.map((course) => (
@@ -471,9 +612,12 @@ export default function StudentsPage() {
                         Please select a student to view their attendance report
                       </p>
                       <Button
-                        onClick={() =>
-                          router.push("/admin/students?view=manage")
-                        }
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("view", "manage");
+                          url.searchParams.set("t", Date.now().toString());
+                          window.location.href = url.toString();
+                        }}
                       >
                         Go to Student List
                       </Button>

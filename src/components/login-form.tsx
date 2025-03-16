@@ -13,14 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-// import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Shield, Loader2, AlertCircle } from "lucide-react";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  // const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -58,12 +57,19 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="w-full">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">CyberShield</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access the admin panel
-          </CardDescription>
+      <Card className="w-full shadow-lg border-t-4 border-t-primary">
+        <CardHeader className="space-y-4 pb-6">
+          <div className="flex justify-center">
+            <div className="bg-primary/10 p-3 rounded-full">
+              <Shield className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <div className="text-center space-y-1.5">
+            <CardTitle className="text-2xl font-bold">CyberShield</CardTitle>
+            <CardDescription>
+              Sign in to access the attendance system
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
@@ -77,6 +83,7 @@ export function LoginForm({
                   placeholder="admin@example.com"
                   required
                   autoComplete="email"
+                  className="h-11"
                 />
               </div>
               <div className="grid gap-2">
@@ -95,14 +102,31 @@ export function LoginForm({
                   type="password"
                   required
                   autoComplete="current-password"
+                  className="h-11"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
+
               {error && (
-                <p className="text-sm text-red-500 text-center">{error}</p>
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md flex items-start text-sm">
+                  <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
               )}
+
+              <Button
+                type="submit"
+                className="h-11 w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
             </div>
           </form>
         </CardContent>

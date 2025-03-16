@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 
 type AttendanceRecord = {
   sessionId: string;
@@ -29,6 +29,7 @@ export function StudentAttendanceReport({
   courseId,
 }: StudentAttendanceProps) {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [studentName, setStudentName] = useState("");
   const [courseName, setCourseName] = useState("");
   const [attendanceRecords, setAttendanceRecords] = useState<
@@ -39,10 +40,20 @@ export function StudentAttendanceReport({
     const fetchAttendanceData = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        // Add timestamp to prevent caching
+        const timestamp = Date.now();
         const response = await fetch(
-          `/api/admin/students/${studentId}/attendance/${courseId}`
+          `/api/admin/students/${studentId}/attendance/${courseId}?t=${timestamp}`
         );
-        if (!response.ok) throw new Error("Failed to fetch attendance data");
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch attendance data: ${response.statusText}`
+          );
+        }
+
         const data = await response.json();
         setStudentName(data.studentName);
         setCourseName(data.courseName);
@@ -50,11 +61,18 @@ export function StudentAttendanceReport({
         setLoading(false);
       } catch (error) {
         console.error("Error fetching attendance data:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load attendance data"
+        );
         setLoading(false);
       }
     };
 
-    fetchAttendanceData();
+    if (studentId && courseId) {
+      fetchAttendanceData();
+    }
   }, [studentId, courseId]);
 
   const attendancePercentage =
@@ -76,8 +94,45 @@ export function StudentAttendanceReport({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex justify-center items-center h-40">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="flex flex-col items-center justify-center h-40 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading attendance data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center justify-center h-40 space-y-4 text-red-600">
+            <AlertCircle className="h-12 w-12" />
+            <div className="text-center">
+              <p className="font-medium">Error loading attendance data</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (attendanceRecords.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg sm:text-xl">
+            Attendance Report: {studentName}
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">Course: {courseName}</p>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center justify-center h-40 space-y-4">
+            <p className="text-muted-foreground">
+              No attendance records found for this student in this course.
+            </p>
           </div>
         </CardContent>
       </Card>
