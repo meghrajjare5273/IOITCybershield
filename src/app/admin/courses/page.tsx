@@ -68,7 +68,7 @@ export default function CoursesPage() {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <TabsContent value="add" asChild>
+          <TabsContent key="add" value="add" asChild>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -79,7 +79,7 @@ export default function CoursesPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="manage" asChild>
+          <TabsContent key="manage" value="manage" asChild>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
