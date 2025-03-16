@@ -3,15 +3,16 @@ import { CoursesClient } from "@/components/courses-client";
 
 // Define the type for searchParams
 interface SearchParams {
-  view?: string;
+  view: string;
 }
 
 export default async function CoursesPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
   const { view } = await searchParams;
+  
   // const view = view || "add";
   const courses = await prisma.course.findMany({
     take: 10, // Initial limit
