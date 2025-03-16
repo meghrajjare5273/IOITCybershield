@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
@@ -89,6 +89,7 @@ model CourseEnrollment {
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, courseId])
+  @@index([courseId])
 }
 
 model CourseSession {
@@ -97,6 +98,8 @@ model CourseSession {
   date        DateTime
   course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   attendances CourseAttendance[]
+
+  @@index([courseId])
 }
 
 model CourseAttendance {

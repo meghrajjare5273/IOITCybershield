@@ -19,8 +19,24 @@ import {
 } from "@/components/ui/table";
 import { DeleteButton } from "@/components/delete-button";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, BarChart } from "lucide-react";
+import {
+  Plus,
+  Search,
+  BarChart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { BulkStudentUpload } from "@/components/bulk-upload";
+
+// Add pagination type
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
 
 export default function StudentsPage() {
   const searchParams = useSearchParams();
@@ -28,9 +44,11 @@ export default function StudentsPage() {
   const view = searchParams.get("view") || "manage";
   const studentIdParam = searchParams.get("studentId");
   const searchQuery = searchParams.get("search") || "";
+  const pageParam = searchParams.get("page") || "1";
+  const limitParam = searchParams.get("limit") || "10";
 
   const [students, setStudents] = useState<any[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
+  // const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(
     studentIdParam
@@ -38,18 +56,30 @@ export default function StudentsPage() {
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [coursesFetched, setCoursesFetched] = useState(false);
+  // Add pagination state
+  const [pagination, setPagination] = useState<Pagination>({
+    total: 0,
+    page: parseInt(pageParam, 10),
+    limit: parseInt(limitParam, 10),
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
 
-  // Fetch students data
+  // Fetch students data with pagination
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `/api/admin/students?search=${encodeURIComponent(searchQuery)}`
+          `/api/admin/students?search=${encodeURIComponent(searchQuery)}&page=${
+            pagination.page
+          }&limit=${pagination.limit}`
         );
         if (!response.ok) throw new Error("Failed to fetch students");
         const data = await response.json();
-        setStudents(data);
+        setStudents(data.students);
+        setPagination(data.pagination);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -58,7 +88,7 @@ export default function StudentsPage() {
     };
 
     fetchStudents();
-  }, [searchQuery]);
+  }, [searchQuery, pagination.page, pagination.limit]);
 
   // Fetch courses for the selected student when in "reports" view
   useEffect(() => {
@@ -99,26 +129,29 @@ export default function StudentsPage() {
   };
 
   const handleSearch = (query: string) => {
-    if (query) {
-      const filtered = students.filter(
-        (student) =>
-          student.name.toLowerCase().includes(query.toLowerCase()) ||
-          student.email.toLowerCase().includes(query.toLowerCase()) ||
-          student.rollno.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredStudents(filtered);
-    } else {
-      setFilteredStudents(students);
-    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("search", query);
+    params.set("page", "1"); // Reset to first page on new search
+    router.push(`/admin/students?${params.toString()}`);
   };
 
   const handleViewAttendance = (studentId: string) => {
-    // setSelectedStudent(studentId);
-    // const params = new URLSearchParams(searchParams.toString());
-    // params.set("view", "reports");
-    // params.set("studentId", studentId);
-    // router.push(`/admin/students?${params.toString()}`);
     router.push(`/admin/students?view=reports&studentId=${studentId}`);
+  };
+
+  // Add page change handler
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`/admin/students?${params.toString()}`);
+  };
+
+  // Add limit change handler
+  const handleLimitChange = (newLimit: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("limit", newLimit.toString());
+    params.set("page", "1"); // Reset to first page when changing limit
+    router.push(`/admin/students?${params.toString()}`);
   };
 
   return (
@@ -164,37 +197,84 @@ export default function StudentsPage() {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Roll No</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {students.map((student) => (
-                            <TableRow key={student.id}>
-                              <TableCell>{student.name}</TableCell>
-                              <TableCell>{student.rollno}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  <DeleteButton studentId={student.id} />
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      handleViewAttendance(student.id)
-                                    }
-                                  >
-                                    View Attendance
-                                  </Button>
-                                </div>
-                              </TableCell>
+                      <>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Roll No</TableHead>
+                              <TableHead>Actions</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {students.map((student) => (
+                              <TableRow key={student.id}>
+                                <TableCell>{student.name}</TableCell>
+                                <TableCell>{student.rollno}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    <DeleteButton studentId={student.id} />
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleViewAttendance(student.id)
+                                      }
+                                    >
+                                      View Attendance
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+
+                        {/* Add pagination controls */}
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="text-sm text-muted-foreground">
+                            Showing {students.length} of {pagination.total}{" "}
+                            students
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <select
+                              className="h-9 w-20 rounded-md border border-input bg-background px-3"
+                              value={pagination.limit}
+                              onChange={(e) =>
+                                handleLimitChange(parseInt(e.target.value))
+                              }
+                            >
+                              <option value="5">5</option>
+                              <option value="10">10</option>
+                              <option value="25">25</option>
+                              <option value="50">50</option>
+                            </select>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handlePageChange(pagination.page - 1)
+                              }
+                              disabled={!pagination.hasPrevPage}
+                            >
+                              <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-sm">
+                              Page {pagination.page} of {pagination.totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handlePageChange(pagination.page + 1)
+                              }
+                              disabled={!pagination.hasNextPage}
+                            >
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -223,43 +303,90 @@ export default function StudentsPage() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   ) : (
-                    <Table className="mt-4">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Branch</TableHead>
-                          <TableHead>Phone</TableHead>
-                          <TableHead>Roll No</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredStudents.map((student) => (
-                          <TableRow key={student.id}>
-                            <TableCell>{student.name}</TableCell>
-                            <TableCell>{student.email}</TableCell>
-                            <TableCell>{student.branch}</TableCell>
-                            <TableCell>{student.phone}</TableCell>
-                            <TableCell>{student.rollno}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <DeleteButton studentId={student.id} />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleViewAttendance(student.id)
-                                  }
-                                >
-                                  View Attendance
-                                </Button>
-                              </div>
-                            </TableCell>
+                    <>
+                      <Table className="mt-4">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Branch</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Roll No</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {students.map((student) => (
+                            <TableRow key={student.id}>
+                              <TableCell>{student.name}</TableCell>
+                              <TableCell>{student.email}</TableCell>
+                              <TableCell>{student.branch}</TableCell>
+                              <TableCell>{student.phone}</TableCell>
+                              <TableCell>{student.rollno}</TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <DeleteButton studentId={student.id} />
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleViewAttendance(student.id)
+                                    }
+                                  >
+                                    View Attendance
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+
+                      {/* Add pagination controls for search results */}
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="text-sm text-muted-foreground">
+                          Showing {students.length} of {pagination.total}{" "}
+                          students
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <select
+                            className="h-9 w-20 rounded-md border border-input bg-background px-3"
+                            value={pagination.limit}
+                            onChange={(e) =>
+                              handleLimitChange(parseInt(e.target.value))
+                            }
+                          >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                          </select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handlePageChange(pagination.page - 1)
+                            }
+                            disabled={!pagination.hasPrevPage}
+                          >
+                            <ChevronLeft size={16} />
+                          </Button>
+                          <span className="text-sm">
+                            Page {pagination.page} of {pagination.totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handlePageChange(pagination.page + 1)
+                            }
+                            disabled={!pagination.hasNextPage}
+                          >
+                            <ChevronRight size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
