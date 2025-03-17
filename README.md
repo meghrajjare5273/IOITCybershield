@@ -67,4 +67,4 @@ For questions or feedback, reach out to the CyberShield Club maintainers via [Gi
 ---
 
 **Built with ❤️ by the CyberShield Club Team**  
-_Empowering cybersecurity education, one attendance at a time._
+_Empowering cybersecurity education, one session at a time._
