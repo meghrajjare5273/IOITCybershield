@@ -28,6 +28,9 @@ export async function GET(request: Request) {
         { email: { contains: search, mode: "insensitive" } },
       ],
     },
+    orderBy: {
+      rollno: "asc",
+    },
     select: {
       id: true,
       name: true,

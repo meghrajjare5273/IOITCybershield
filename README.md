@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CyberShield Attendance System
 
-## Getting Started
+<div align="center">
+    <img src="./public/logo.png" alt="CyberShield Logo" width=200 />
+</div>
 
-First, run the development server:
+Welcome to the **CyberShield Attendance System**, a web application designed to streamline attendance monitoring for students enrolled in courses under the CyberShield Club. This system offers an intuitive admin interface for managing students, courses, sessions, and attendance records, all tailored to enhance the club's cybersecurity education initiatives.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+🔗 **Live Demo**: [cybershield-pied.vercel.app](https://cybershield-pied.vercel.app)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Student Management**: Add, delete, and search students with ease, including bulk uploads via Excel.
+- **Course Administration**: Create and manage courses, enroll students, and schedule sessions.
+- **Attendance Tracking**: Record and monitor attendance for each course session with detailed reports.
+- **Admin Dashboard**: Get a quick overview of student counts, course stats, and upcoming sessions.
+- **Responsive Design**: Fully optimized for desktop and mobile devices with a sleek, modern UI.
+- **Secure Authentication**: Email and password-based login powered by Better Auth.
+- **Data Persistence**: PostgreSQL database with Prisma ORM for reliable storage.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Technologies Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework**: [Next.js 15](https://nextjs.org/) with TypeScript
+- **Database**: PostgreSQL with [Prisma](https://www.prisma.io/)
+- **Authentication**: [Better Auth](https://better-auth.com/)
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Libraries**: ExcelJS (for bulk uploads), Framer Motion (animations), Lucide React (icons)
+- **Deployment**: [Vercel](https://vercel.com/)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🚀 Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application features an admin dashboard accessible after logging in. Here's a brief guide on how to use the main functionalities:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Sign In**: Use the admin credentials to access the dashboard at `/auth/sign-in`.
+2. **Manage Students**: Navigate to `/admin/students` to add, search, or view attendance reports.
+3. **Handle Courses**: Go to `/admin/courses` to create courses, enroll students, or schedule sessions.
+4. **Track Attendance**: Access specific session pages (e.g., `/admin/courses/[courseId]/sessions/[sessionId]/attendance`) to mark attendance.
+
+The dashboard is designed to be intuitive, with clear navigation and responsive design for ease of use on various devices.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how to get involved:
+
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/YourFeature`).
+3. Commit your changes (`git commit -m "Add YourFeature"`).
+4. Push to the branch (`git push origin feature/YourFeature`).
+5. Open a Pull Request.
+
+For more details, check out the [Next.js GitHub repository](https://github.com/vercel/next.js) for inspiration and guidelines.
+
+---
+
+## 📧 Contact
+
+For questions or feedback, reach out to the CyberShield Club maintainers via [GitHub Issues](https://github.com/meghrajjare5273/meghrajjare5273-ioitcybershield/issues).
+
+---
+
+**Built with ❤️ by the CyberShield Club Team**  
+_Empowering cybersecurity education, one attendance at a time._
