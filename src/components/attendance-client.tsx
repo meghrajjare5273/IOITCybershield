@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface Student {
   id: string;
@@ -85,23 +86,34 @@ export function AttendanceClient({
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-6"
+    >
       <div className="flex items-center gap-2">
         <Link href={`/admin/courses/${courseId}`}>
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 group"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft
+              size={16}
+              className="transition-transform group-hover:-translate-x-1"
+            />
             <span>Back to Course</span>
           </Button>
         </Link>
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900 rounded-t-xl">
-          <CardTitle className="text-xl md:text-2xl">
+      <Card className="shadow-lg border-t-4 border-t-primary">
+        <CardHeader className="bg-primary/5 dark:bg-primary/10 rounded-t-xl">
+          <CardTitle className="text-xl md:text-2xl flex items-center">
+            <span className="bg-primary text-primary-foreground p-1 rounded-md mr-2">
+              <CheckCircle className="h-5 w-5" />
+            </span>
             Attendance: {session.courseName}
           </CardTitle>
           <p className="text-muted-foreground">
@@ -135,7 +147,7 @@ export function AttendanceClient({
               </div>
             </div>
 
-            <div className="border rounded-md overflow-hidden">
+            <div className="border rounded-md overflow-hidden shadow-sm">
               <div className="max-h-[400px] overflow-y-auto">
                 <table className="w-full">
                   <thead className="bg-muted sticky top-0">
@@ -184,7 +196,7 @@ export function AttendanceClient({
             </div>
 
             {error && (
-              <div className="flex items-center text-red-600 text-sm">
+              <div className="flex items-center text-red-600 dark:text-red-400 text-sm">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 {error}
               </div>
@@ -231,7 +243,7 @@ export function AttendanceClient({
           </form>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
 

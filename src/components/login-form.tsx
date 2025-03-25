@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { Shield, Loader2, AlertCircle } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function LoginForm({
   className,
@@ -57,6 +58,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <div className="flex justify-end">
+        <ThemeToggle />
+      </div>
       <Card className="w-full shadow-lg border-t-4 border-t-primary">
         <CardHeader className="space-y-4 pb-6">
           <div className="flex justify-center">

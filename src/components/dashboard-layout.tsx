@@ -20,6 +20,7 @@ import {
   Shield,
 } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface SidebarItemProps {
@@ -56,8 +57,8 @@ const SidebarItem = ({
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200",
           active
-            ? "bg-primary text-primary-foreground font-medium shadow-sm"
-            : "hover:bg-accent hover:translate-x-1"
+            ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
+            : "hover:bg-sidebar-accent/50 hover:translate-x-1"
         )}
       >
         {icon}
@@ -79,7 +80,7 @@ const SidebarItem = ({
               key={item.href}
               href={item.href}
               onClick={onClick}
-              className="block px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+              className="block px-3 py-2 text-sm rounded-md hover:bg-sidebar-accent/50 transition-colors"
             >
               {item.label}
             </Link>
@@ -131,13 +132,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Shield className="h-6 w-6 text-primary mr-2" />
           <h1 className="text-xl font-bold text-primary">CyberShield</h1>
         </div>
-        <button
-          className="p-2 rounded-md hover:bg-accent transition-colors"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-        >
-          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            className="p-2 rounded-md hover:bg-accent transition-colors"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+          >
+            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </header>
 
       {/* Sidebar */}
@@ -158,21 +162,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             }}
             transition={{ duration: 0.3 }}
             className={cn(
-              "fixed inset-y-0 left-0 z-40 w-64 bg-card border-r shadow-sm md:relative",
+              "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r shadow-sm md:relative",
               isMobile ? "top-[57px] pt-2" : "pt-0"
             )}
           >
             {!isMobile && (
-              <div className="p-4 border-b flex items-center">
-                <Shield className="h-6 w-6 text-primary mr-2" />
-                <div>
-                  <h1 className="text-xl font-bold text-primary">
-                    CyberShield
-                  </h1>
-                  <p className="text-xs text-muted-foreground">
-                    Attendance System
-                  </p>
+              <div className="p-4 border-b flex items-center justify-between">
+                <div className="flex items-center">
+                  <Shield className="h-6 w-6 text-primary mr-2" />
+                  <div>
+                    <h1 className="text-xl font-bold text-primary">
+                      CyberShield
+                    </h1>
+                    <p className="text-xs text-sidebar-foreground/70">
+                      Attendance System
+                    </p>
+                  </div>
                 </div>
+                <ThemeToggle />
               </div>
             )}
 
@@ -233,7 +240,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="absolute bottom-0 w-full p-4 border-t">
-              <LogoutButton className="w-full justify-start gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+              <LogoutButton className="w-full justify-start gap-2 hover:bg-red-500/10 hover:text-red-500 transition-colors">
                 <LogOut size={18} />
                 <span>Logout</span>
               </LogoutButton>

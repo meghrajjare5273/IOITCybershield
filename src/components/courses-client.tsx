@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { BookOpen, Calendar, Users, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Define the Course type
 interface Course {
@@ -65,6 +66,21 @@ export function CoursesClient({
     window.history.pushState({}, "", url.toString());
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 },
+  };
+
   return (
     <div className="space-y-6">
       <Tabs value={view} onValueChange={handleTabChange} className="w-full">
@@ -110,42 +126,71 @@ export function CoursesClient({
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+            >
               {courses.map((course) => (
-                <Card
-                  key={course.id}
-                  className="overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
-                    <CardTitle className="flex items-center">
-                      <BookOpen className="mr-2 h-5 w-5 text-blue-500" />
-                      {course.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {course.description || "No description provided"}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-xs px-2 py-1 rounded-full flex items-center">
-                        <Users className="mr-1 h-3 w-3" />
-                        <span>Students</span>
+                <motion.div key={course.id} variants={item}>
+                  <Card className="overflow-hidden hover:shadow-md transition-shadow border-t-4 border-t-primary">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BookOpen className="mr-2 h-5 w-5 text-primary" />
+                        {course.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {course.description || "No description provided"}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center">
+                          <Users className="mr-1 h-3 w-3" />
+                          <span>Students</span>
+                        </div>
+                        <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center">
+                          <Calendar className="mr-1 h-3 w-3" />
+                          <span>Sessions</span>
+                        </div>
                       </div>
-                      <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-xs px-2 py-1 rounded-full flex items-center">
-                        <Calendar className="mr-1 h-3 w-3" />
-                        <span>Sessions</span>
-                      </div>
-                    </div>
-                    <Link href={`/admin/courses/${course.id}?t=${Date.now()}`}>
-                      <Button className="w-full">Manage Course</Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                      <Link
+                        href={`/admin/courses/${course.id}?t=${Date.now()}`}
+                      >
+                        <Button className="w-full group">
+                          Manage Course
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function ArrowRight(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
   );
 }
