@@ -110,12 +110,28 @@ export async function bulkAddStudents(formData: FormData) {
       throw new Error(`Missing ${fieldName} in row ${rowIndex}`);
     }
 
-    // Handle cell objects by extracting the text value
-    const rawValue =
-      typeof value === "object" && value !== null
-        ? value.text || value.toString()
-        : String(value);
+    // Handle different types of cell values
+    let rawValue: string;
+    if (typeof value === "object" && value !== null) {
+      // Handle ExcelJS cell value objects
+      if ("text" in value) {
+        rawValue = String(value.text);
+      } else if ("richText" in value) {
+        // If it's a rich text cell, extract the first text segment
+        rawValue = String(value.richText[0]?.text || "");
+      } else if ("result" in value) {
+        // Handle formula cell values
+        rawValue = String(value.result);
+      } else {
+        // Convert to string as a fallback
+        rawValue = String(value);
+      }
+    } else {
+      // Convert to string for primitive types
+      rawValue = String(value);
+    }
 
+    // Trim and check for empty string
     const str = rawValue.trim();
     if (str === "") {
       throw new Error(`Empty ${fieldName} in row ${rowIndex}`);
