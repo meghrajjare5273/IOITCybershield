@@ -89,7 +89,7 @@ model CourseEnrollment {
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, courseId])
-  @@index([courseId])
+  @@index([courseId,studentId])
 }
 
 model CourseSession {
@@ -112,4 +112,5 @@ model CourseAttendance {
   courseSession   CourseSession @relation(fields: [courseSessionId], references: [id])
 
   @@unique([studentId, courseSessionId])
+  @@index([studentId, courseSessionId])
 }

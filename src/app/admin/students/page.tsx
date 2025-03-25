@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,6 +48,7 @@ export default function StudentsPage() {
   const pageParam = searchParams.get("page") || "1";
   const limitParam = searchParams.get("limit") || "10";
 
+  const [isPending, startTransition] = useTransition();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +71,18 @@ export default function StudentsPage() {
     hasNextPage: false,
     hasPrevPage: false,
   });
+
+  // Update URL and navigate with transition
+  const updateUrlAndNavigate = (url: URL) => {
+    startTransition(() => {
+      // Add timestamp to force refresh
+      url.searchParams.set("t", Date.now().toString());
+      window.history.pushState({}, "", url.toString());
+
+      // Force reload to ensure fresh data
+      window.location.href = url.toString();
+    });
+  };
 
   // Fetch students data with pagination
   useEffect(() => {
@@ -150,7 +163,6 @@ export default function StudentsPage() {
   }, [selectedStudent, view, selectedCourseId]);
 
   const handleTabChange = (value: string) => {
-    // Update URL without causing a full page navigation
     const url = new URL(window.location.href);
     url.searchParams.set("view", value);
 
@@ -163,63 +175,42 @@ export default function StudentsPage() {
       setCoursesFetched(false);
     }
 
-    // Add timestamp to force refresh
-    url.searchParams.set("t", Date.now().toString());
-    window.history.pushState({}, "", url.toString());
-
-    // Force reload to ensure fresh data
-    window.location.href = url.toString();
+    updateUrlAndNavigate(url);
   };
 
   const handleSearch = (query: string) => {
-    // Update URL with search query
     const url = new URL(window.location.href);
     url.searchParams.set("search", query);
     url.searchParams.set("page", "1"); // Reset to first page on new search
-    url.searchParams.set("t", Date.now().toString()); // Add timestamp
-    window.history.pushState({}, "", url.toString());
 
-    // Force reload to ensure fresh data
-    window.location.href = url.toString();
+    updateUrlAndNavigate(url);
   };
 
   const handleViewAttendance = (studentId: string) => {
     setSelectedStudent(studentId);
 
-    // Update URL
     const url = new URL(window.location.href);
     url.searchParams.set("view", "reports");
     url.searchParams.set("studentId", studentId);
-    url.searchParams.set("t", Date.now().toString()); // Add timestamp
-    window.history.pushState({}, "", url.toString());
 
-    // Force reload to ensure fresh data
-    window.location.href = url.toString();
+    updateUrlAndNavigate(url);
   };
 
   // Add page change handler
   const handlePageChange = (newPage: number) => {
-    // Update URL
     const url = new URL(window.location.href);
     url.searchParams.set("page", newPage.toString());
-    url.searchParams.set("t", Date.now().toString()); // Add timestamp
-    window.history.pushState({}, "", url.toString());
 
-    // Force reload to ensure fresh data
-    window.location.href = url.toString();
+    updateUrlAndNavigate(url);
   };
 
   // Add limit change handler
   const handleLimitChange = (newLimit: number) => {
-    // Update URL
     const url = new URL(window.location.href);
     url.searchParams.set("limit", newLimit.toString());
     url.searchParams.set("page", "1"); // Reset to first page when changing limit
-    url.searchParams.set("t", Date.now().toString()); // Add timestamp
-    window.history.pushState({}, "", url.toString());
 
-    // Force reload to ensure fresh data
-    window.location.href = url.toString();
+    updateUrlAndNavigate(url);
   };
 
   return (
@@ -229,6 +220,8 @@ export default function StudentsPage() {
       </div>
 
       <Tabs value={view} onValueChange={handleTabChange} className="w-full">
+        {/* Rest of the code remains the same as the previous implementation */}
+        {/* The only significant change is the addition of useTransition and the updateUrlAndNavigate function */}
         <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
           <TabsTrigger value="manage" className="flex items-center gap-2">
             <Plus size={16} />
@@ -629,6 +622,11 @@ export default function StudentsPage() {
           </TabsContent>
         </AnimatePresence>
       </Tabs>
+      {isPending && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-white" />
+        </div>
+      )}
     </div>
   );
 }
