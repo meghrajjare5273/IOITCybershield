@@ -89,6 +89,9 @@ export function CourseForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting || (result?.success ?? false)}
+                  onSubmit={() => {
+                    setIsSubmitting(true);
+                  }}
                   className={cn(
                     "bg-primary hover:bg-primary/90",
                     !result && "w-full",
