@@ -1,7 +1,7 @@
 # CyberShield Attendance System
 
 <div align="center">
-    <img src="./public/logo.png" alt="CyberShield Logo" width=200 />
+    <img src="./public/logo.png" alt="CyberShield" width=200 />
 </div>
 
 Welcome to the **CyberShield Attendance System**, a web application designed to streamline attendance monitoring for students enrolled in courses under the CyberShield Club. This system offers an intuitive admin interface for managing students, courses, sessions, and attendance records, all tailored to enhance the club's cybersecurity education initiatives.
